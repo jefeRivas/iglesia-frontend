@@ -8,8 +8,8 @@ export default function ManualScheduler() {
   const { members } = useMembers();
   //const [schedule, setSchedule] = useState({});
 
-  const dias = ["Martes", "Jueves", "Domingo"];
-  const areas = ["Transmision", "Sonido", "Textos", "Camara1", "Camara2"];
+  const dias = ["martes", "jueves", "domingo"];
+  const areas = ["transmision", "sonido", "textos", "camara1", "camara2"];
 
   const [schedule, setSchedule] = useState(
     dias.reduce((acc, dia) => {
@@ -72,13 +72,13 @@ export default function ManualScheduler() {
       <div className="overflow-x-auto">
         <table className="table-auto border-collapse border border-gray-400 w-full text-center">
           <thead>
-            <tr className="bg-gray-200">
-              <th className="border border-gray-400 px-4 py-2">Área</th>
-              {dias.map((dia) => (
-                <th key={dia} className="border border-gray-400 px-4 py-2">
-                  {dia}
-                </th>
-              ))}
+            
+              <tr className="bg-gray-200">
+                <th className="border border-gray-400 px-4 py-2">Área</th>
+                <th className="border border-gray-400 px-4 py-2">Martes</th>
+                <th className="border border-gray-400 px-4 py-2">Jueves</th>
+                <th className="border border-gray-400 px-4 py-2">Domingo</th>
+              
             </tr>
           </thead>
           <tbody>
@@ -121,3 +121,4 @@ export default function ManualScheduler() {
   );
 
 }
+

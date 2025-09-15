@@ -8,8 +8,8 @@ export default function ManualScheduler() {
   const { members } = useMembers();
   //const [schedule, setSchedule] = useState({});
 
-  const dias = ["martes", "jueves", "domingo"];
-  const areas = ["transmision", "sonido", "textos", "camara1", "camara2"];
+  const dias = ["Martes", "Jueves", "Domingo"];
+  const areas = ["Transmision", "Sonido", "Textos", "Camara1", "Camara2"];
 
   const [schedule, setSchedule] = useState(
     dias.reduce((acc, dia) => {
@@ -67,7 +67,7 @@ export default function ManualScheduler() {
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">Programación Manual</h1>
+      <h1 className="text-2xl font-bold mb-4">Programación de esta semana</h1>
 
       <div className="overflow-x-auto">
         <table className="table-auto border-collapse border border-gray-400 w-full text-center">
@@ -119,4 +119,5 @@ export default function ManualScheduler() {
       </button>
     </div>
   );
+
 }

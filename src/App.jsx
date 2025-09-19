@@ -10,8 +10,8 @@ function App() {
       <div className="min-h-screen bg-gray-50">
         <header className="bg-gradient-to-r from-blue-600 to-blue-800 text-white shadow-lg">
           <div className="container mx-auto px-4 py-6">
-            <h1 className="text-2xl md:text-3xl font-bold">Gestión de Miembros</h1>
-            <p className="text-blue-100 mt-2">Sistema de Programación y Gestión</p>
+            <h1 className="text-2xl md:text-3xl font-bold">Programación comunicaciones 📹</h1>
+            <p className="text-blue-100 mt-2">Programación equipo de comunicaciones MMM Boston - Medellín</p>
           </div>
         </header>
         <main className="container mx-auto px-4 py-8">

@@ -1,103 +1,103 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useState, useContext, useEffect } from "react";
+import { toast } from "react-toastify";
 
-// Lista inicial de miembros (los que me pasaste)
-const initialMembers = [
-  {
-    nombre: "Jeferson",
+const defaultMembers = {
+  Jeferson: {
     areas: ["sonido", "camara", "textos", "transmision"],
     dias: ["domingo"],
     activo: true,
   },
-  {
-    nombre: "Julian",
+  Julian: {
     areas: ["sonido", "camara", "textos", "transmision"],
     dias: ["domingo"],
     activo: true,
   },
-  {
-    nombre: "Camilo",
+  Camilo: {
     areas: ["sonido", "camara", "textos", "transmision"],
     dias: ["martes", "jueves", "domingo"],
     activo: true,
   },
-  {
-    nombre: "Wilder",
+  Wilder: {
     areas: ["camara"],
     dias: ["jueves"],
     activo: true,
   },
-  {
-    nombre: "Maritza",
+  Maritza: {
     areas: ["camara", "textos"],
     dias: ["jueves", "domingo"],
     activo: true,
   },
-  {
-    nombre: "Sebastian",
+  Sebastian: {
     areas: ["camara", "textos", "transmision"],
     dias: ["martes", "jueves", "domingo"],
     activo: true,
   },
-  {
-    nombre: "Andres",
-    areas: ["texto", "sonido", "camara"], // 👀 revisa: pusiste "texto" en vez de "textos"
+  Andres: {
+    areas: ["textos", "sonido", "camara"],
     dias: ["martes", "jueves", "domingo"],
     activo: true,
   },
-  {
-    nombre: "Jose",
+  Jose: {
     areas: ["textos", "transmision", "sonido", "camara"],
     dias: ["martes", "jueves", "domingo"],
     activo: true,
   },
-  {
-    nombre: "Angelica",
+  Angelica: {
     areas: ["textos"],
     dias: ["domingo"],
     activo: true,
   },
-  {
-    nombre: "Juan Carlos",
+  "Juan Carlos": {
     areas: ["camara"],
     dias: ["martes", "jueves", "domingo"],
     activo: true,
   },
-  {
-    nombre: "Mirlan",
+  Mirlan: {
     areas: ["textos"],
     dias: ["martes", "jueves", "domingo"],
     activo: true,
   },
-  {
-    nombre: "Vanesa",
+  Vanesa: {
     areas: ["sonido", "transmision"],
     dias: ["martes", "jueves", "domingo"],
     activo: true,
   },
-  {
-    nombre: "Roselis",
+  Roselis: {
     areas: ["textos"],
     dias: ["martes", "jueves", "domingo"],
     activo: true,
   },
-  {
-    nombre: "Robert",
+  Robert: {
     areas: ["textos", "camara"],
     dias: ["martes", "jueves", "domingo"],
     activo: true,
-  },
-];
+  }
+};
 
 const MembersContext = createContext();
 
 export function MembersProvider({ children }) {
   const [members, setMembers] = useState(() => {
-    const stored = localStorage.getItem("miembros");
-    return stored ? JSON.parse(stored) : initialMembers;
+    try {
+      const stored = localStorage.getItem("members");
+      if (!stored || stored === "undefined") {
+        localStorage.setItem("members", JSON.stringify(defaultMembers));
+        return defaultMembers;
+      }
+      return JSON.parse(stored);
+    } catch (error) {
+      console.error("Error loading members:", error);
+      return defaultMembers;
+    }
   });
 
   useEffect(() => {
-    localStorage.setItem("miembros", JSON.stringify(members));
+    try {
+      localStorage.setItem("members", JSON.stringify(members));
+    } catch (error) {
+      console.error("Error saving members:", error);
+      toast.error("Error al guardar los cambios");
+    }
   }, [members]);
 
   return (
@@ -108,5 +108,9 @@ export function MembersProvider({ children }) {
 }
 
 export function useMembers() {
-  return useContext(MembersContext);
+  const context = useContext(MembersContext);
+  if (!context) {
+    throw new Error("useMembers must be used within a MembersProvider");
+  }
+  return context;
 }

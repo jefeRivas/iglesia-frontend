@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useMembers } from "../context/MembersContext";
 
-export default function GestionMiembros() {
-  // Estado inicial con todos los miembros que me pasaste
-  const [miembros, setMiembros] = useState({
+export default function GestionMiembros({ setPantalla }) {
+  const { members, setMembers } = useMembers();
+  const miembrosIniciales = {
     Jeferson: {
       areas: ["sonido", "camara", "textos", "transmision"],
       dias: ["domingo"],
@@ -73,7 +74,20 @@ export default function GestionMiembros() {
       dias: ["martes", "jueves", "domingo"],
       activo: true,
     },
+  };
+
+  const [miembros, setMiembros] = useState(() => {
+    if (members && Object.keys(members).length > 0) {
+      return members;
+    }
+    return miembrosIniciales;
   });
+
+  // Guardar miembros en localStorage cuando cambien
+  // Sync with context when miembros changes
+  useEffect(() => {
+    setMembers(miembros);
+  }, [miembros, setMembers]);
 
   const [programacion, setProgramacion] = useState(null);
   const areasDisponibles = ["sonido", "camara", "textos", "transmision"];
@@ -173,6 +187,12 @@ export default function GestionMiembros() {
 
   return (
     <div className="p-6 space-y-6">
+      <button
+        className="mb-4 px-3 py-2 bg-gray-500 text-white rounded"
+        onClick={() => setPantalla("menu")}
+      >
+        ⬅ Volver
+      </button>
       <h1 className="text-2xl font-bold">Gestión de Miembros</h1>
 
       {/* LISTADO DE MIEMBROS */}
@@ -290,69 +310,70 @@ export default function GestionMiembros() {
         Exportar JSON
       </button>
       {/* Botón Generar Programación */}
-<div className="mt-6">
-  <button
-    onClick={async () => {
-      // Filtrar miembros activos y quitar el campo "activo"
-      const filtrados = Object.fromEntries(
-        Object.entries(miembros)
-          .filter(([_, data]) => data.activo)
-          .map(([nombre, { activo, ...resto }]) => [nombre, resto])
-      );
+      <div className="mt-6">
+        <button
+          onClick={async () => {
+            // Filtrar miembros activos y quitar el campo "activo"
+            const filtrados = Object.fromEntries(
+              Object.entries(miembros)
+                .filter(([_, data]) => data.activo)
+                .map(([nombre, { activo, ...resto }]) => [nombre, resto])
+            );
 
-      try {
-        const resp = await fetch("https://iglesia-backend-7jen.onrender.com/programar", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(filtrados),
-        });
-        const data = await resp.json();
-        setProgramacion(data); // guardamos la programación en el estado
-      } catch (err) {
-        console.error("Error generando programación:", err);
-      }
-    }}
-    className="bg-green-600 text-white px-4 py-2 rounded-lg shadow hover:bg-green-700"
-  >
-    Generar Programación
-  </button>
-  {programacion && (
-  <div className="mt-6 bg-white p-4 rounded-lg shadow">
-    <h2 className="text-lg font-bold mb-3">Programación esta semana</h2>
-    <table className="w-full text-center border-collapse border">
-      <thead>
-        <tr className="bg-gray-100">
-          <th className="border p-2">Área</th>
-          {["martes", "jueves", "domingo"].map((dia) => (
-            <th key={dia} className="border p-2 capitalize">{dia}</th>
-          ))}
-        </tr>
-      </thead>
-      <tbody>
-        {["transmision", "sonido", "textos", "camara1", "camara2"].map((area) => (
-        <tr key={area}>
-            <td className="border p-2">{area}
-                
-            </td>
+            try {
+              const resp = await fetch(
+                "https://iglesia-backend-7jen.onrender.com/programar",
+                {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify(filtrados),
+                }
+              );
+              const data = await resp.json();
+              setProgramacion(data); // guardamos la programación en el estado
+            } catch (err) {
+              console.error("Error generando programación:", err);
+            }
+          }}
+          className="bg-green-600 text-white px-4 py-2 rounded-lg shadow hover:bg-green-700"
+        >
+          Generar Programación
+        </button>
+        {programacion && (
+          <div className="mt-6 bg-white p-4 rounded-lg shadow">
+            <h2 className="text-lg font-bold mb-3">Programación esta semana</h2>
+            <table className="w-full text-center border-collapse border">
+              <thead>
+                <tr className="bg-gray-100">
+                  <th className="border p-2">Área</th>
+                  {["martes", "jueves", "domingo"].map((dia) => (
+                    <th key={dia} className="border p-2 capitalize">
+                      {dia}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {["transmision", "sonido", "textos", "camara1", "camara2"].map(
+                  (area) => (
+                    <tr key={area}>
+                      <td className="border p-2">{area}</td>
 
-            {["martes", "jueves", "domingo"].map((dia) => (
-              <td key={dia} className="border p-2">
-                {programacion[dia] && programacion[dia][area]
-                  ? programacion[dia][area].join(", ")
-                  : "SIN ASIGNAR"}
-              </td>
-            ))}
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  </div>
-)}
-
-
-</div>
-
+                      {["martes", "jueves", "domingo"].map((dia) => (
+                        <td key={dia} className="border p-2">
+                          {programacion[dia] && programacion[dia][area]
+                            ? programacion[dia][area].join(", ")
+                            : "SIN ASIGNAR"}
+                        </td>
+                      ))}
+                    </tr>
+                  )
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
     </div>
-    
   );
 }

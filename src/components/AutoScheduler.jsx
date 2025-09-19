@@ -1,46 +1,47 @@
 import React, { useState } from "react";
 import { useMembers } from "../context/MembersContext";
+import { toast } from "react-toastify";
+import { AREAS, DIAS, AREAS_DISPLAY } from "../constants/schedule";
+import { downloadScheduleAsImage } from "../utils/downloadImage";
 
-export default function AutoScheduler() {
-    
+export default function AutoScheduler({ setPantalla }) {
   const { members } = useMembers();
-    const [schedule, setSchedule] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [programacion, setProgramacion] = useState(null);
+  const dias = Object.values(DIAS);
 
   const generateSchedule = async () => {
     try {
       setLoading(true);
-      setError(null);
-
-      // Convertir lista en objeto con clave = nombre
-      const payload = members.filter((m) => m.activo) // solo los activos
-        .reduce((acc, m) => {
-          acc[m.nombre] = {
-            areas: m.areas,
-            dias: m.dias,
-            activo: m.activo,
-          };
-          return acc;
-        }, {});
+      // Filtrar miembros activos y quitar el campo "activo"
+      const miembrosFiltrados = Object.fromEntries(
+        Object.entries(members)
+          .filter(([_, data]) => data.activo)
+          .map(([nombre, data]) => [
+            nombre,
+            {
+              areas: data.areas,
+              dias: data.dias
+            }
+          ])
+      );
 
       const response = await fetch("https://iglesia-backend-7jen.onrender.com/programar", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(miembrosFiltrados),
       });
-      console.log(JSON.stringify(payload))
 
       if (!response.ok) {
-        throw new Error("Error en el backend");
+        throw new Error('Error en la respuesta del servidor');
       }
 
-      
       const data = await response.json();
-      setSchedule(data);
-    } catch (err) {
-      console.error("Error generando programación:", err);
-      setError("No se pudo generar la programación. Revisa el backend.");
+      setProgramacion(data);
+      toast.success("Programación generada exitosamente");
+    } catch (error) {
+      console.error("Error generando programación:", error);
+      toast.error("Error al generar la programación");
     } finally {
       setLoading(false);
     }
@@ -48,49 +49,78 @@ export default function AutoScheduler() {
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">Programación Automática</h1>
-
       <button
-        onClick={generateSchedule}
-        className="px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700"
-        disabled={loading}
+        onClick={() => setPantalla('menu')}
+        className="mb-4 px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors"
       >
-        {loading ? "Generando..." : "Generar Programación"}
+        ← Volver
       </button>
 
-      {error && <p className="mt-4 text-red-500">{error}</p>}
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-2xl font-bold">Programación Automática</h1>
+        <div className="space-x-4">
+          {programacion && (
+            <button
+              onClick={() => downloadScheduleAsImage('auto-schedule-table', 'programacion-automatica')}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition-colors"
+            >
+              Descargar Imagen
+            </button>
+          )}
+          <button
+            onClick={generateSchedule}
+            disabled={loading}
+            className={`px-4 py-2 bg-green-600 text-white rounded-lg shadow transition-colors ${
+              loading ? "opacity-50 cursor-not-allowed" : "hover:bg-green-700"
+            }`}
+          >
+            {loading ? "Generando..." : "Generar"}
+          </button>
+        </div>
+      </div>
 
-      {schedule && (
-        <div className="mt-6 overflow-x-auto">
-          <table className="table-auto border-collapse border border-gray-400 w-full text-center">
-            <thead>
-              <tr className="bg-gray-200">
-                <th className="border border-gray-400 px-4 py-2">Área</th>
-                <th className="border border-gray-400 px-4 py-2">Martes</th>
-                <th className="border border-gray-400 px-4 py-2">Jueves</th>
-                <th className="border border-gray-400 px-4 py-2">Domingo</th>
-              </tr>
-            </thead>
-            <tbody>
-              {["transmision", "sonido", "textos", "camara1", "camara2"].map(
-                (area) => (
+      {loading ? (
+        <div className="flex flex-col items-center justify-center py-12">
+          <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-blue-600 mb-4"></div>
+          <p className="text-lg text-gray-600">Generando programación...</p>
+        </div>
+      ) : programacion ? (
+        <>
+          <h2 className="text-xl font-semibold mb-4 text-center">Programación para esta semana</h2>
+          <div className="overflow-x-auto">
+            <table id="auto-schedule-table" className="w-full border-collapse border-2 border-gray-800 min-w-[750px]">
+              <thead>
+                <tr className="bg-blue-600 text-white">
+                  <th className="border-2 border-gray-800 px-6 py-3 text-lg font-bold">Área</th>
+                  {dias.map((dia) => (
+                    <th key={dia} className="border-2 border-gray-800 px-6 py-3 text-lg font-bold">
+                      {dia.charAt(0).toUpperCase() + dia.slice(1)}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {["transmision", "sonido", "textos", "camara1", "camara2"].map((area) => (
                   <tr key={area}>
-                    <td className="border border-gray-400 px-4 py-2 font-semibold">
-                      {area}
+                    <td className="border-2 border-gray-800 px-6 py-3 text-lg font-bold bg-gray-100">
+                      {area === "camara1" ? "Cámara 1" :
+                       area === "camara2" ? "Cámara 2" :
+                       area.charAt(0).toUpperCase() + area.slice(1)}
                     </td>
-                    {["martes", "jueves", "domingo"].map((dia) => (
-                      <td
-                        key={dia}
-                        className="border border-gray-400 px-4 py-2"
-                      >
-                        {schedule[dia]?.[area] || "-"}
+                    {dias.map((dia) => (
+                      <td key={dia} className="border-2 border-gray-800 px-6 py-3">
+                        {programacion[dia]?.[area]?.[0] || "SIN ASIGNAR"}
                       </td>
                     ))}
                   </tr>
-                )
-              )}
-            </tbody>
-          </table>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
+      ) : (
+        <div className="text-center py-12 text-gray-600">
+          <p>Presiona el botón para generar una programación automática</p>
         </div>
       )}
     </div>

@@ -1,10 +1,12 @@
 import React, { useState } from "react";
 import { useMembers } from "../context/MembersContext";
+import { toast } from "react-toastify";
+import { validateMember } from "../utils/validation";
 
 const allAreas = ["sonido", "camara", "textos", "transmision"];
 const allDias = ["martes", "jueves", "domingo"];
 
-export default function MemberManagement() {
+export default function MemberManagement({ setPantalla }) {
   const { members, setMembers } = useMembers();
   const [newMember, setNewMember] = useState({
     nombre: "",
@@ -14,51 +16,61 @@ export default function MemberManagement() {
   });
 
   const toggleActivo = (nombre) => {
-    setMembers((prev) =>
-      prev.map((m) =>
-        m.nombre === nombre ? { ...m, activo: !m.activo } : m
-      )
-    );
+    setMembers((prev) => ({
+      ...prev,
+      [nombre]: { ...prev[nombre], activo: !prev[nombre].activo }
+    }));
   };
 
   const toggleArea = (nombre, area) => {
-    setMembers((prev) =>
-      prev.map((m) =>
-        m.nombre === nombre
-          ? {
-              ...m,
-              areas: m.areas.includes(area)
-                ? m.areas.filter((a) => a !== area)
-                : [...m.areas, area],
-            }
-          : m
-      )
-    );
+    setMembers((prev) => ({
+      ...prev,
+      [nombre]: {
+        ...prev[nombre],
+        areas: prev[nombre].areas.includes(area)
+          ? prev[nombre].areas.filter((a) => a !== area)
+          : [...prev[nombre].areas, area]
+      }
+    }));
   };
 
   const toggleDia = (nombre, dia) => {
-    setMembers((prev) =>
-      prev.map((m) =>
-        m.nombre === nombre
-          ? {
-              ...m,
-              dias: m.dias.includes(dia)
-                ? m.dias.filter((d) => d !== dia)
-                : [...m.dias, dia],
-            }
-          : m
-      )
-    );
+    setMembers((prev) => ({
+      ...prev,
+      [nombre]: {
+        ...prev[nombre],
+        dias: prev[nombre].dias.includes(dia)
+          ? prev[nombre].dias.filter((d) => d !== dia)
+          : [...prev[nombre].dias, dia]
+      }
+    }));
   };
 
   const handleAddMember = () => {
-    if (!newMember.nombre.trim()) return;
-    setMembers((prev) => [...prev, { ...newMember }]);
+    const errors = validateMember(newMember);
+    if (errors.length > 0) {
+      errors.forEach(error => toast.error(error));
+      return;
+    }
+    setMembers((prev) => ({
+      ...prev,
+      [newMember.nombre]: {
+        areas: newMember.areas,
+        dias: newMember.dias,
+        activo: true
+      }
+    }));
     setNewMember({ nombre: "", areas: [], dias: [], activo: true });
   };
 
   return (
     <div className="p-6">
+      <button
+        onClick={() => setPantalla('menu')}
+        className="mb-4 px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors"
+      >
+        ← Volver
+      </button>
       <h2 className="text-xl font-bold mb-4">Gestión de Miembros</h2>
 
       {/* Formulario para agregar nuevo miembro */}
@@ -125,26 +137,27 @@ export default function MemberManagement() {
       </div>
 
       {/* Listado de miembros */}
-      <table className="w-full border">
-        <thead>
-          <tr>
-            <th className="border p-2">Nombre</th>
-            <th className="border p-2">Áreas</th>
-            <th className="border p-2">Días</th>
-            <th className="border p-2">Activo</th>
-          </tr>
-        </thead>
+      <div className="overflow-x-auto">
+        <table className="w-full border min-w-[750px]">
+          <thead>
+            <tr className="bg-gray-100">
+              <th className="border p-2">Nombre</th>
+              <th className="border p-2">Áreas</th>
+              <th className="border p-2">Días</th>
+              <th className="border p-2">Activo</th>
+            </tr>
+          </thead>
         <tbody>
-          {members.map((m) => (
-            <tr key={m.nombre}>
-              <td className="border p-2">{m.nombre}</td>
+          {Object.entries(members).map(([nombre, m]) => (
+            <tr key={nombre}>
+              <td className="border p-2">{nombre}</td>
               <td className="border p-2">
                 {allAreas.map((area) => (
                   <label key={area} className="mr-2">
                     <input
                       type="checkbox"
                       checked={m.areas.includes(area)}
-                      onChange={() => toggleArea(m.nombre, area)}
+                      onChange={() => toggleArea(nombre, area)}
                       disabled={!m.activo}
                     />{" "}
                     {area}
@@ -157,7 +170,7 @@ export default function MemberManagement() {
                     <input
                       type="checkbox"
                       checked={m.dias.includes(dia)}
-                      onChange={() => toggleDia(m.nombre, dia)}
+                      onChange={() => toggleDia(nombre, dia)}
                       disabled={!m.activo}
                     />{" "}
                     {dia}
@@ -169,7 +182,7 @@ export default function MemberManagement() {
                   className={`px-3 py-1 rounded ${
                     m.activo ? "bg-green-500" : "bg-red-500"
                   } text-white`}
-                  onClick={() => toggleActivo(m.nombre)}
+                  onClick={() => toggleActivo(nombre)}
                 >
                   {m.activo ? "Activo" : "Inactivo"}
                 </button>
@@ -178,6 +191,7 @@ export default function MemberManagement() {
           ))}
         </tbody>
       </table>
+      </div>
     </div>
   );
 }
